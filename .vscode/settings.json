@@ -1,0 +1,14 @@
+{
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "editor.inlineSuggest.enabled": false,
+  "editor.suggest.showSnippets": false,
+  "editor.wordBasedSuggestions": "off",
+  "editor.suggest.showClasses": true,
+  "editor.suggest.showFunctions": true,
+  "editor.suggest.showMethods": true,
+  "editor.suggest.showVariables": true,
+  "python-envs.defaultEnvManager": "ms-python.python:conda",
+  "python-envs.defaultPackageManager": "ms-python.python:conda",
+  "flake8.args": ["--extend-ignore=E501,E26"]
+}

@@ -1,0 +1,11 @@
+# Python 缓存和本地虚拟环境
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# 本地环境变量和下载缓存
+.env
+.env.*
+.cache/
+.DS_Store
