@@ -37,7 +37,7 @@
 
 数据来源、筛选、清理、大模型图像标注、人工抽查与 VLM 监督微调的实操路线见 [数据构建与VLM后训练指南](数据构建与VLM后训练指南.md)。图文 SFT 标签和机器人专家动作属于不同的监督，不能互相冒充。
 
-当前可复用样本来自 `PickCube-v1/dataset.py`：一张 RGB `[3,128,128]` float32（0–1）、qpos 状态 `[9]`、Panda `pd_joint_pos` 动作 `[8]`。示范只有一个 episode、74 个动作。数据中的任务描述、统计量、camera 名称和 action chunk 对齐需要明确准备；一个 episode 可以做接口检查，不能证明泛化。
+当前可复用样本来自 `PickCube-v1/rgbd_单条示范/` 的 HDF5：原始一张 RGB 为 `[128,128,3]` uint8，qpos 状态为 `[9]`、Panda `pd_joint_pos` 动作为 `[8]`。示范只有一个 episode、74 个动作及 75 条观测，时间对齐需要核对。数据中的任务描述、统计量、camera 名称和 action chunk 对齐需要明确准备；一个 episode 可以做接口检查，不能证明泛化。
 
 数据转换时，记录 episode 边界、fps、时间戳、每帧任务文字、相机 keys、state/action 维度与顺序、控制模式、单位、归一化统计量和末尾 chunk padding。若目标对相机不可见或状态中没有目标，不能假设图文模型能知道目标；仿真场景、提示和可观测输入必须匹配。
 
@@ -49,7 +49,7 @@ Tokenizer 把文字转为 ID 与 attention mask；文本 embedding 把 ID 查表
 
 ## 3. 图像和预训练视觉语言模型
 
-现有 CNN 输出 `[B,128]`；已完成的随机 patch 练习把真实图像整理成多个向量，仅用于理解序列。真实代码在 [smolvlm_with_expert.py](../预测流/LeRobot/src/lerobot/policies/smolvla/smolvlm_with_expert.py)：`vision_model → connector`；语言通过 VLM 文本 embedding。`prepare_images` 还负责尺寸调整与像素范围转换；实际大小看配置而不是硬背数字。
+此前 CNN 和随机 patch 练习仅用于理解视觉特征和序列，旧练习代码按用户要求已删除。真实代码在 [smolvlm_with_expert.py](../预测流/LeRobot/src/lerobot/policies/smolvla/smolvlm_with_expert.py)：`vision_model → connector`；语言通过 VLM 文本 embedding。`prepare_images` 还负责尺寸调整与像素范围转换；实际大小看配置而不是硬背数字。
 
 区分：
 
