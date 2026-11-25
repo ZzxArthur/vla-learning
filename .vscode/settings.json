@@ -8,7 +8,8 @@
   "editor.suggest.showFunctions": true,
   "editor.suggest.showMethods": true,
   "editor.suggest.showVariables": true,
-  "python-envs.defaultEnvManager": "ms-python.python:venv",
+  "python.defaultInterpreterPath": "/home/hatepp/SSD512/conda_envs/vla-learning/bin/python",
+  "python-envs.defaultEnvManager": "ms-python.python:conda",
   "python-envs.defaultPackageManager": "ms-python.python:pip",
   "flake8.args": ["--extend-ignore=E501,E26"]
 }

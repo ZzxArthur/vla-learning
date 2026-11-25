@@ -9,3 +9,11 @@ venv/
 .env.*
 .cache/
 .DS_Store
+
+# 本地模型目录与权重文件
+models/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
