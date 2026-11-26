@@ -1,9 +1,11 @@
 from lerobot.sim.integrations.libero import env_fns, canonical_observation
-from pathlib import Path
-from safetensors.torch import load_file
 from lerobot.policies.smolvla.configuration_smolvla import SmolVLAConfig
 from lerobot.policies.factory import make_pre_post_processors
 from lerobot.policies.smolvla.modeling_smolvla import SmolVLAPolicy
+from pathlib import Path
+from safetensors.torch import load_file
+
+from PIL import Image
 
 import torch
 import numpy as np
@@ -18,20 +20,6 @@ factories = env_fns(
         "observation_width": 256,
     },
 )
-
-env = factories["libero_spatial"][0][0]()
-
-observation, info = env.reset(seed=0)
-integration_obs = canonical_observation(observation)
-
-integration_obs['task'] = env.task_description
-
-camera1 = torch.from_numpy(
-    integration_obs["observation.images.image"]
-).permute(2, 0, 1).float() / 255.0
-camera2 = torch.from_numpy(
-    integration_obs["observation.images.image2"]
-).permute(2, 0, 1).float() / 255.0
 
 
 root = Path(__file__).resolve().parent.parent
@@ -50,28 +38,55 @@ preprocessor, postprocessor = make_pre_post_processors(
     },
 )
 
-sample = {
-    "observation.state": torch.from_numpy(
-        integration_obs["observation.state"]
-    ),
-    "observation.images.camera1": camera1,
-    "observation.images.camera2": camera2,
-    "task": integration_obs['task'],
-}
 
-processed = preprocessor(sample)
+env = factories["libero_spatial"][0][0]()
+observation, info = env.reset(seed=0)
+integration_obs = canonical_observation(observation)
 
-action_chunk = policy.predict_action_chunk(processed)
-first_action = action_chunk[:, 0, :]
-final_action = postprocessor(first_action)
+policy.reset()
+frames = [Image.fromarray(integration_obs["observation.images.image"])]
+for step in range(1, 281):
+    integration_obs = canonical_observation(observation)
+    integration_obs['task'] = env.task_description
+    camera1 = torch.from_numpy(
+        integration_obs["observation.images.image"]
+    ).permute(2, 0, 1).float() / 255.0
+    camera2 = torch.from_numpy(
+        integration_obs["observation.images.image2"]
+    ).permute(2, 0, 1).float() / 255.0
+    sample = {"observation.state": torch.from_numpy(
+        integration_obs["observation.state"]),
+        "observation.images.camera1": camera1,
+        "observation.images.camera2": camera2,
+        "task": integration_obs['task']}
+    processed = preprocessor(sample)
 
-action = final_action[0].cpu().numpy()
-print(action)
-action = np.clip(action, env.action_space.low, env.action_space.high)
-print("裁剪后的动作：", action)
-next_observation, reward, terminated, truncated, info = env.step(action)
-next_integration_obs = canonical_observation(next_observation)
-next_state = next_integration_obs["observation.state"]
-print(integration_obs["observation.state"])
-print(next_state)
+    action_chunk = policy.predict_action_chunk(processed)
+    first_action = action_chunk[:, 0, :]
+    final_action = postprocessor(first_action)
+
+    action = final_action[0].cpu().numpy()
+    action = np.clip(action, env.action_space.low, env.action_space.high)
+    next_observation, reward, terminated, truncated, info = env.step(action)
+    print("步数：", step)
+    print("任务成功：", info["is_success"])
+    next_integration_obs = canonical_observation(next_observation)
+    frames.append(Image.fromarray(next_integration_obs["observation.images.image"]))
+    observation = next_observation
+    if terminated or truncated:
+        break
+else:
+    print("达到 280 步上限，结束本回合。")
+
+gif_path = root / "libero_rollout.gif"
+
+frames[0].save(
+    gif_path,
+    save_all=True,
+    append_images=frames[1:],
+    duration=200,
+    loop=0,
+)
+
+print("动图已保存：", gif_path)
 env.close()
